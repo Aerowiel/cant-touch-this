@@ -1,0 +1,45 @@
+.start-game {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  .choose-pseudonyme {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    &__label {
+      font-size: 2rem;
+      color: green;
+    }
+    &__input {
+      padding: 0.5rem 1rem;
+      border: 2px solid green;
+      color: green;
+      background-color: black;
+      outline: none;
+      font-size: 2rem;
+    }
+  }
+
+  .start-button {
+    cursor: pointer;
+    border: 2px solid green;
+    background-color: black;
+    font-size: 2rem;
+    color: green;
+    padding: 0.5rem 1rem;
+
+    &:hover,
+    &:focus {
+      border-color: red;
+      color: red;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      border-color: gray;
+      color: gray;
+    }
+  }
+}

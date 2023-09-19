@@ -1,0 +1,62 @@
+@import "./Designs/designs";
+
+.cant-touch-this {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background-color: black;
+
+  .start-button {
+    padding: 1rem;
+  }
+
+  &__canvas-container {
+    border: 1px solid green;
+  }
+
+  .game-over {
+    margin-bottom: 2rem;
+  }
+
+  &__score {
+    font-size: 2rem;
+    color: green;
+    margin-bottom: 1rem;
+  }
+
+  .score-board {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    color: green;
+    margin-bottom: 2rem;
+    width: 30rem;
+
+    &__title {
+      font-size: 2rem;
+      width: 100%;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .score-board-table {
+      width: 100%;
+      border-collapse: collapse;
+      white-space: nowrap;
+
+      thead {
+        color: green;
+      }
+
+      th,
+      td {
+        border: 1px solid green;
+        text-align: center;
+        padding: 0.25rem;
+      }
+    }
+  }
+}
