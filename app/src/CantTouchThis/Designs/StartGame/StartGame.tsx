@@ -25,7 +25,7 @@ const StartButton = ({ pseudonyme, isRetry, startNewGame }) => {
       className="start-button"
       onClick={() => startNewGame()}
     >
-      {isRetry ? "Retry" : "Start"}
+      {isRetry ? "Press [SPACE] to retry" : "Start"}
     </button>
   );
 };

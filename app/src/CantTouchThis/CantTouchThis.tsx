@@ -1,197 +1,109 @@
-import { useEffect, useRef, useState } from "react";
-import ECS from "~/src/CantTouchThis/GameEngine/ECS";
-import {
-  BallComponent,
-  BouncyComponent,
-  ColorComponent,
-  HealthComponent,
-  PlayerComponent,
-  PositionComponent,
-  RectColliderComponent,
-  SizeComponent,
-  VelocityComponent,
-} from "~/src/CantTouchThis/Components";
+import { useRef, useState } from "react";
 import GameOver from "~/src/CantTouchThis/Designs/GameOver";
-import {
-  PlayerInputSystem,
-  MovementSystem,
-  PlayerRendererSystem,
-  BallRendererSystem,
-  CollisionDetectorSystem,
-  CollisionDamageSystem,
-  WallBounceSystem,
-} from "~/src/CantTouchThis/Systems";
-import Keyboard from "~/src/CantTouchThis/Utils/Keyboard";
 import StartGame from "~/src/CantTouchThis/Designs/StartGame";
+import { useSubmit } from "@remix-run/react";
+import ScoreBoard from "./Designs/ScoreBoard";
+import GameHistory from "./Utils/GameHistory";
+import Game from "./Game/Game";
+import LZUTF8 from "lzutf8";
+import GameEncoder from "./Utils/GameEncoder";
+import GameCompresser from "./Utils/GameCompressor";
 
-// 600 in hex32
-const CANVAS_WIDTH = parseInt("io", 32);
-const CANVAS_HEIGHT = parseInt("io", 32);
-
-export const BALL_SPAWN_RATE = 3;
-const BALL_SIZE = 20;
+export const CANVAS_WIDTH = 600;
+export const CANVAS_HEIGHT = 600;
 
 const CantTouchThis = ({ player, scores }) => {
   const canvasRef = useRef();
-  const gameLoopRef = useRef();
-  const ecs = useRef<ECS>();
 
   const [started, setStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
-  const paused = useRef(false);
-
-  const nextBallSpawn = useRef(0);
-
   const [score, setScore] = useState(0);
 
-  const animate = (timeInMilliseconds, player) => {
-    if (!paused.current) {
-      const playerComponents = ecs.current?.getComponents(player);
-      const playerHealth = playerComponents?.get(HealthComponent);
+  const [replay, setReplay] = useState(null);
 
-      if (playerHealth?.value <= 0) {
-        setGameOver(true);
-        setStarted(false);
-        cancelAnimationFrame(gameLoopRef.current);
-        return;
-      }
-      if (timeInMilliseconds >= nextBallSpawn.current) {
-        // Increase score
-        setScore((previousScore) => previousScore + 1);
-
-        const playerPosition = playerComponents.get(PositionComponent);
-        const { x: playerX, y: playerY } = playerPosition;
-        const { size: playerSize } = playerComponents?.get(
-          RectColliderComponent
-        );
-        const { width: playerWidth, height: playerHeight } = playerSize;
-
-        const safeZoneSize = 40;
-        // const safeZone = {leftRight: {x: playerX - (safeZoneSize / 2) , y: playerY - (safeZoneSize / 2) }, rightBottom: {x: playerX + playerWidth + (safeZoneSize / 2) }}
-
-        const possibleX = Array.from(
-          Array(CANVAS_WIDTH - BALL_SIZE + 1).keys()
-        );
-        const possibleY = Array.from(
-          Array(CANVAS_HEIGHT - BALL_SIZE + 1).keys()
-        );
-        const safeX = possibleX.filter((x) => {
-          return (
-            x <= playerX - safeZoneSize ||
-            x >= playerX + playerWidth + safeZoneSize
-          );
-        });
-        const safeY = possibleY.filter((y) => {
-          return (
-            y <= playerY - safeZoneSize ||
-            y >= playerY + playerHeight + safeZoneSize
-          );
-        });
-
-        const ballX = safeX[Math.floor(Math.random() * safeX.length)];
-        const ballY = safeY[Math.floor(Math.random() * safeY.length)];
-
-        const vx = playerX - ballX;
-        const vy = playerY - ballY;
-        const vectorLength = Math.sqrt(vx * vx + vy * vy);
-
-        const normalized_vx = vx / vectorLength;
-        const normalized_vy = vy / vectorLength;
-
-        const speedFactor = score % 5 === 0 ? 8 : 6;
-
-        createBall(
-          new PositionComponent(ballX, ballY),
-          new VelocityComponent(
-            normalized_vx * speedFactor,
-            normalized_vy * speedFactor
-          )
-        );
-        nextBallSpawn.current = timeInMilliseconds + 1000 * BALL_SPAWN_RATE;
-      }
-
-      ecs.current.update(timeInMilliseconds);
-    }
-    gameLoopRef.current = requestAnimationFrame((timeInMilliseconds) =>
-      animate(timeInMilliseconds, player)
-    );
-  };
-
-  const getRandomBetween = (min, max) => {
-    return Math.round(Math.random() * (max - min) + min);
-  };
-
-  const createBall = (position, velocity) => {
-    if (!ecs.current) return;
-
-    const ball = ecs.current.addEntity();
-    const color = new ColorComponent(
-      Math.floor(getRandomBetween(200, 255)),
-      Math.floor(getRandomBetween(200, 255)),
-      Math.floor(getRandomBetween(200, 255))
-    );
-
-    ecs.current.addComponent(ball, color);
-
-    ecs.current.addComponent(ball, position);
-    const size = new SizeComponent(BALL_SIZE, BALL_SIZE);
-    ecs.current.addComponent(ball, size);
-    ecs.current.addComponent(ball, new RectColliderComponent(position, size));
-    ecs.current.addComponent(ball, velocity);
-    ecs.current.addComponent(ball, new BallComponent());
-    ecs.current.addComponent(ball, new BouncyComponent());
-
-    return ball;
-  };
+  const submit = useSubmit();
 
   const startNewGame = () => {
     setScore(0);
     setGameOver(false);
     setStarted(true);
-    nextBallSpawn.current = 0;
 
-    const canvasElement: HTMLCanvasElement | null =
-      document.getElementById("game");
-
-    if (!canvasElement) {
-      console.error("Canvas element not found");
-      return;
-    }
-
-    /* @TODO find a way to prevent this mutation */
     const canvas = {
       width: CANVAS_HEIGHT,
       height: CANVAS_WIDTH,
       context: canvasRef.current.getContext("2d"),
     };
 
-    ecs.current = new ECS(canvas);
-    const keyboard = new Keyboard();
+    const game = new Game({
+      canvas,
+      callbacks: {
+        onScoreUpdate: setScore,
+        onEndGame: handleEndGame,
+      },
+    });
 
-    ecs.current.addSystem(10, new PlayerInputSystem(keyboard));
+    game.start();
 
-    ecs.current.addSystem(70, new CollisionDetectorSystem());
-    ecs.current.addSystem(71, new CollisionDamageSystem());
-    ecs.current.addSystem(80, new WallBounceSystem());
-    ecs.current.addSystem(90, new MovementSystem());
-    ecs.current.addSystem(100, new BallRendererSystem());
-    ecs.current.addSystem(100, new PlayerRendererSystem());
+    window.addEventListener("blur", () => {
+      if (game.started) {
+        game.end();
+      }
+    });
+  };
 
-    // Player init
-    const player = ecs.current.addEntity();
-    ecs.current.addComponent(player, new PlayerComponent());
+  const handleEndGame = (game) => {
+    setGameOver(true);
+    setStarted(false);
 
-    const size = new SizeComponent(20, 20);
-    ecs.current.addComponent(player, size);
-    const position = new PositionComponent(canvas.width / 2, canvas.height / 2);
-    ecs.current.addComponent(player, position);
-    ecs.current.addComponent(player, new RectColliderComponent(position, size));
-    ecs.current.addComponent(player, new VelocityComponent());
-    ecs.current.addComponent(player, new HealthComponent(1));
+    console.log({ game });
 
-    gameLoopRef.current = requestAnimationFrame((timeInMilliseconds) =>
-      animate(timeInMilliseconds, player)
+    const encodedSnapshots = GameEncoder.encodeSnapshots(
+      game.history.snapshots
     );
+    console.log({ encoded: encodedSnapshots });
+
+    const decodedSnapshots = GameEncoder.decodeSnapshots(encodedSnapshots);
+    console.log({ decoded: decodedSnapshots });
+    console.log({ base: game.history.snapshots });
+
+    setReplay({ seed: game.seed, snapshots: decodedSnapshots });
+
+    const formData = new FormData();
+    formData.set("action", "endGame");
+    formData.set("score", game.score);
+    formData.set("s", game.seed);
+    formData.set("h", encodedSnapshots);
+    const compressedSnapshots = GameCompresser.compress(formData.get("h"));
+    formData.set("h", compressedSnapshots);
+
+    submit(formData, { method: "post", action: "/?index" });
+  };
+
+  const replayGame = async () => {
+    if (!replay) return;
+
+    setStarted(true);
+    setGameOver(false);
+
+    const { seed, snapshots } = replay;
+
+    const canvas = {
+      width: CANVAS_HEIGHT,
+      height: CANVAS_WIDTH,
+      context: canvasRef.current.getContext("2d"),
+    };
+
+    const _game = new Game({
+      seed,
+      canvas,
+      callbacks: {
+        onScoreUpdate: setScore,
+      },
+    });
+
+    await _game.clientReplay(snapshots);
+
+    setStarted(false);
   };
 
   return (
@@ -205,39 +117,16 @@ const CantTouchThis = ({ player, scores }) => {
         }}
       >
         {gameOver ? (
-          <GameOver score={score} canvas={canvasRef.current} />
+          <GameOver score={score} />
         ) : started ? (
           <div className="cant-touch-this__score">SCORE: {score}</div>
         ) : null}
+
         {!started && (
           <>
-            <div className="score-board">
-              <div className="score-board__title">SCOREBOARD</div>
-              <table className="score-board-table">
-                <thead>
-                  <tr>
-                    <th>Place</th>
-                    <th>Pseudonyme</th>
-                    <th>Score</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {scores.map((score, index) => (
-                    <tr key={score.id} className="score-board-table-row">
-                      <td className="score-board-table-row__place">
-                        #{index + 1}
-                      </td>
-                      <td className="score-board-table-row__pseudonyme">
-                        {score.pseudonyme}
-                      </td>
-                      <td className="score-board-table-row__score">
-                        {score.score}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ScoreBoard scores={scores} />
+            <button onClick={replayGame}>replay</button>
+
             <StartGame
               isRetry={gameOver}
               startNewGame={startNewGame}
@@ -245,20 +134,20 @@ const CantTouchThis = ({ player, scores }) => {
             />
           </>
         )}
+
         <div
           className="cant-touch-this__canvas-container"
           style={{
-            width: 600,
-            height: 600,
+            width: CANVAS_WIDTH,
+            height: CANVAS_HEIGHT,
             display: !started || gameOver ? "none" : "block",
           }}
         >
           <canvas
             id="game"
             ref={canvasRef}
-            width={600}
-            height={600}
-            style={{ border: "1px solid black" }}
+            width={CANVAS_WIDTH}
+            height={CANVAS_HEIGHT}
           ></canvas>
         </div>
       </div>

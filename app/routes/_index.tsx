@@ -1,16 +1,14 @@
 import CantTouchThis from "~/src/CantTouchThis";
-import { addScore, getTopTenScores } from "~/models/Score";
+import { addScore, getScoreBySeed, getTopTenScores } from "~/models/Score";
 import { useLoaderData } from "@remix-run/react";
-import {
-  createPlayerSession,
-  getCurrentGame,
-  getPlayer,
-} from "~/session.server";
+import { createPlayerSession, getPlayer } from "~/session.server";
 import { MetaFunction, redirect } from "@remix-run/node";
-import { BALL_SPAWN_RATE } from "~/src/CantTouchThis/CantTouchThis";
+import { CANVAS_HEIGHT, CANVAS_WIDTH } from "~/src/CantTouchThis/CantTouchThis";
 import { useEffect, useState } from "react";
 import MobileNotSupported from "~/src/CantTouchThis/Designs/MobileNotSupported";
-import CryptoJS from "crypto-js";
+import GameCompresser from "~/src/CantTouchThis/Utils/GameCompressor";
+import GameEncoder from "~/src/CantTouchThis/Utils/GameEncoder";
+import Game from "~/src/CantTouchThis/Game/Game";
 
 export const loader = async ({ request }) => {
   const data = {
@@ -41,51 +39,59 @@ export const action = async ({ request }) => {
       });
     }
     case "endGame": {
-      const endedAt = Date.now();
-
       const player = await getPlayer(request);
-      const pseudonyme = player.pseudonyme;
 
-      const currentGame = await getCurrentGame(request);
-      const startedAt = currentGame.startedAt;
-
-      if (!currentGame) {
+      if (!player) {
         return null;
       }
 
-      const score = Number(formData.get("score") as string);
-      const encryptedScore = formData.get("userId") as string;
-      const encryptedScoreBytes = CryptoJS.AES.decrypt(
-        encryptedScore,
-        "jVAriiJYoR7OZBW"
-      );
-      const decryptedScore = Number(
-        encryptedScoreBytes.toString(CryptoJS.enc.Utf8)
-      );
+      const pseudonyme = player.pseudonyme;
 
-      const elaspedTimeInSeconds = (endedAt - startedAt) / 1000;
-      const calculatedScore = Math.floor(
-        elaspedTimeInSeconds / BALL_SPAWN_RATE + 1
-      );
+      /* Replay */
+      const clientScore = Number(formData.get("score") as string);
+      const seed = formData.get("s") as string;
+      const compressedSnapshots = formData.get("h") as string;
+      const encodedSnapshots = GameCompresser.decompress(compressedSnapshots);
+      const snapshots = GameEncoder.decodeSnapshots(encodedSnapshots);
+      console.log({ snapshots });
+      console.log({ seed });
 
+      const canvas = {
+        width: CANVAS_HEIGHT,
+        height: CANVAS_WIDTH,
+        context: null,
+      };
+
+      const game = new Game({
+        seed,
+        canvas,
+        callbacks: {},
+        server: true,
+      });
+
+      game.serverReplay(snapshots);
+
+      const serverScore = game.score;
+
+      const scoreAlreadyExists = await getScoreBySeed(seed);
+
+      console.log({ scoreAlreadyExists });
       const scoreSeemsLegit =
-        score === decryptedScore && score === calculatedScore;
+        clientScore === serverScore && !scoreAlreadyExists;
 
-      /* Debug suspicious score */
-      if (score > 20 || !scoreSeemsLegit) {
-        console.log({
-          pseudonyme,
-          elaspedTimeInSeconds,
-          score,
-          decryptedScore,
-          calculatedScore,
-          scoreSeemsLegit,
-        });
+      if (!scoreSeemsLegit) {
+        /* Rickroll cheaters */
+        return redirect(
+          "https://www.youtube.com/watch?v=oHg5SJYRHA0&ab_channel=cotter548"
+        );
       }
 
-      if (score > 100 || !scoreSeemsLegit) return null;
-
-      await addScore({ pseudonyme, score, elaspedTimeInSeconds });
+      await addScore({
+        pseudonyme,
+        score: serverScore,
+        seed,
+        replay: compressedSnapshots,
+      });
       await getTopTenScores();
 
       return null;

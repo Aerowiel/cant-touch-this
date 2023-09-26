@@ -23,7 +23,6 @@ export async function createPlayerSession({
   const session = await getSession(request);
   session.set(SESSION_KEY, {
     player: { pseudonyme },
-    currentGame: { startedAt: Date.now() },
   });
   return redirect("/", {
     headers: {
@@ -46,13 +45,4 @@ export async function getPlayer(
 
   const data = session.get(SESSION_KEY);
   return data?.player;
-}
-
-export async function getCurrentGame(
-  request: Request
-): Promise<{ startedAt: number } | undefined> {
-  const session = await getSession(request);
-
-  const data = session.get(SESSION_KEY);
-  return data?.currentGame;
 }

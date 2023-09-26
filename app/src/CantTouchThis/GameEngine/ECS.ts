@@ -5,7 +5,7 @@ export abstract class Component {}
 export abstract class System {
   public abstract componentsRequired: Set<Function>;
 
-  public abstract update(entities: Set<Entity>, time: any): void;
+  public abstract update(entities: Set<Entity>, delta?: number): void;
 
   public ecs: ECS;
 }
@@ -51,9 +51,13 @@ class ECS {
   private entitiesToDestroy = new Array<Entity>();
 
   public canvas;
+  public keyboard;
+  public timeMachine;
 
-  constructor(canvas: any) {
+  constructor(canvas: any, keyboard: any, timeMachine: any) {
     this.canvas = canvas;
+    this.keyboard = keyboard;
+    this.timeMachine = timeMachine;
   }
 
   /* Entities API */
@@ -67,6 +71,10 @@ class ECS {
 
   public removeEntity(entity: Entity): void {
     this.entitiesToDestroy.push(entity);
+  }
+
+  public getEntities(): Map<Entity, ComponentContainer> {
+    return this.entities;
   }
 
   /* Components API */
@@ -116,19 +124,23 @@ class ECS {
   }
 
   public update(time): void {
-    this.clearCanvas();
+    const delta = this.timeMachine.update(time);
+
+    if (this.canvas.context) {
+      this.clearCanvas();
+    }
 
     for (let priority of this.priorities) {
       let systems = this.updateMap.get(priority);
 
       for (let system of systems) {
         if (this.systems.get(system)?.size === 0) continue;
-        system.update(this.systems.get(system));
+        system.update(this.systems.get(system), delta);
       }
     }
 
     while (this.entitiesToDestroy.length > 0) {
-      this.destroyEntity(this.entitiesToDestroy.pop(), time);
+      this.destroyEntity(this.entitiesToDestroy.pop());
     }
   }
 

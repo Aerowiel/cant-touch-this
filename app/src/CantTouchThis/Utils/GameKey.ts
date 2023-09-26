@@ -1,5 +1,9 @@
 class GameKey {
-  constructor(public code: string, public isDown: boolean = false) {}
+  constructor(
+    public code: string,
+    public isDown: boolean = false,
+    public previousIsDown: Boolean = false
+  ) {}
 }
 
 GameKey.up = "KeyW";

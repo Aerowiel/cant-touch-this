@@ -4,7 +4,7 @@ const getTopTenScores = async () => {
   const topTenScores = await prisma.score.findMany({
     orderBy: [
       {
-        elaspedTimeInSeconds: "desc",
+        score: "desc",
       },
     ],
     take: 10,
@@ -13,14 +13,12 @@ const getTopTenScores = async () => {
   return topTenScores;
 };
 
-const addScore = async ({ pseudonyme, score, elaspedTimeInSeconds }) => {
+const addScore = async ({ pseudonyme, score, seed, replay }) => {
   const topTenScores = await getTopTenScores();
 
   const isTopTenScore =
     topTenScores.length < 10 ||
-    topTenScores.some(
-      (score) => score.elaspedTimeInSeconds < elaspedTimeInSeconds
-    );
+    topTenScores.some((topTenScore) => topTenScore.score < score);
 
   if (isTopTenScore) {
     if (topTenScores.length >= 10) {
@@ -28,13 +26,19 @@ const addScore = async ({ pseudonyme, score, elaspedTimeInSeconds }) => {
       await prisma.score.delete({ where: { id: scoreToDelete.id } });
     }
     await prisma.score.create({
-      data: { pseudonyme, score, elaspedTimeInSeconds },
+      data: { pseudonyme, score, seed, replay },
     });
   }
+};
+
+const getScoreBySeed = async (seed) => {
+  const score = await prisma.score.findFirst({ where: { seed } });
+
+  return score;
 };
 
 const resetScores = async () => {
   await prisma.score.deleteMany();
 };
 
-export { getTopTenScores, addScore, resetScores };
+export { getTopTenScores, addScore, resetScores, getScoreBySeed };

@@ -11,9 +11,10 @@ datasource db {
 }
 
 model Score {
-  id                   String   @id @default(uuid())
-  pseudonyme           String
-  score                Int
-  elaspedTimeInSeconds Int
-  createdAt            DateTime @default(now())
+  id         String   @id @default(uuid())
+  seed       String
+  pseudonyme String
+  score      Float
+  replay     String?
+  createdAt  DateTime @default(now())
 }
