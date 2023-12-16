@@ -7,6 +7,12 @@ const getTopTenScores = async () => {
         score: "desc",
       },
     ],
+    select: {
+      id: true,
+      pseudonyme: true,
+      score: true,
+      replay: true,
+    },
     take: 10,
   });
 

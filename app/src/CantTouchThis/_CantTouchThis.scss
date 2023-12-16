@@ -6,15 +6,26 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  background-color: black;
+  background-color: $backgroundColor;
+
+  .number-of-players {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+  }
 
   .start-button {
     padding: 1rem;
   }
 
+  .stop-replay {
+    margin-top: 1rem;
+  }
+
   &__canvas-container {
     canvas {
-      border: 1px solid green;
+      background-color: black;
+      border: 2px solid $brandPrimary;
     }
   }
 
@@ -24,7 +35,11 @@
 
   &__score {
     font-size: 2rem;
-    color: green;
+    color: $brandPrimary;
     margin-bottom: 1rem;
+  }
+
+  .health-bar {
+    margin-bottom: 0.5rem;
   }
 }

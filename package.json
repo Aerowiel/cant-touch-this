@@ -4,14 +4,13 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "deploy": "fly deploy --remote-only",
     "dev": "npm-run-all --parallel \"dev:*\"",
-    "dev:start": "remix dev",
-    "zdev:node": "cross-env NODE_ENV=development nodemon --require dotenv/config ./server.js --watch ./server.js",
+    "dev:remix": "remix dev -c \"npm run node\" --manual",
+    "node": "nodemon --require dotenv/config ./server.js --watch ./server.js",
     "dev:css": "npm run build:css && node-sass -rw ./app/styles -o ./app/styles",
     "build": "npm run build:css && remix build",
     "build:css": "node-sass ./app/styles -o ./app/styles --output-style compressed",
-    "start": "remix-serve ./build/index.js",
+    "start": "cross-env NODE_ENV=production node ./server.js",
     "typecheck": "tsc"
   },
   "dependencies": {
@@ -33,10 +32,12 @@
     "node-sass": "^9.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-icons": "^4.11.0",
     "seedrandom": "^3.0.5",
-    "socket.io": "^4.7.2",
-    "socket.io-client": "^4.7.2",
+    "socket.io": "^4.6.2",
+    "socket.io-client": "^4.6.2",
     "source-map-support": "^0.5.21",
+    "ts-node": "^10.9.1",
     "uuid": "^9.0.1"
   },
   "devDependencies": {

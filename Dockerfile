@@ -40,12 +40,11 @@ RUN npm run build
 # Finally, build the production image with minimal footprint
 FROM base
 
-ENV DATABASE_URL=file:/data/sqlite4.db
+RUN --mount=type=secret,id=DATABASE_URL \
+    DATABASE_URL="$(cat /run/secrets/DATABASE_URL)" npx prisma generate
+
 ENV NODE_ENV="production"
 
-
-# add shortcut for connecting to database CLI
-RUN echo "#!/bin/sh\nset -x\nsqlite3 \$DATABASE_URL" > /usr/local/bin/database-cli && chmod +x /usr/local/bin/database-cli
 
 WORKDIR /app
 
@@ -56,8 +55,7 @@ COPY --from=build /app/build /app/build
 COPY --from=build /app/public /app/public
 COPY --from=build /app/package.json /app/package.json
 COPY --from=build /app/prisma /app/prisma
-
-RUN npx prisma migrate deploy
+COPY --from=build /app/server.js /app/server.js
 
 EXPOSE 3000
 CMD [ "npm", "run", "start" ]

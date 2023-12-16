@@ -4,8 +4,8 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  background-color: black;
-  color: green;
+  background-color: $backgroundColor;
+  color: $brandPrimary;
   font-size: 2rem;
 
   > div {

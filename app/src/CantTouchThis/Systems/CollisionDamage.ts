@@ -1,5 +1,6 @@
 import { Entity, System } from "~/src/CantTouchThis/GameEngine/ECS";
 import {
+  BallComponent,
   HealthComponent,
   PlayerComponent,
   RectColliderComponent,
@@ -27,17 +28,17 @@ export default class CollisionDamageSystem extends System {
     const playerHealth = playerComponents.get(HealthComponent);
 
     for (let collidedEntity of playerCollisions) {
+      const collidedEntityComponents = this.ecs.getComponents(collidedEntity);
+
+      if (!collidedEntityComponents.has(BallComponent)) continue;
       // Remove collision from collisions on both entity
       playerCollisions.delete(collidedEntity);
 
-      const collidedEntityComponents = this.ecs.getComponents(collidedEntity);
-      const collidedEntityCollidor = collidedEntityComponents.get(
-        RectColliderComponent
-      );
-      collidedEntityCollidor.collisions.delete(player);
-
       // Remove 1 hp from player health
-      playerHealth.value -= 1;
+      playerHealth.health -= 1;
+
+      // Remove ball
+      this.ecs.removeEntity(collidedEntity);
     }
   }
 }

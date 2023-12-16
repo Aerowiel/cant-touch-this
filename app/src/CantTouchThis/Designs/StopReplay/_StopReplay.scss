@@ -1,0 +1,14 @@
+.stop-replay {
+  cursor: pointer;
+  border: 2px solid $brandPrimary;
+  background-color: $backgroundColor;
+  font-size: 2rem;
+  color: $brandPrimary;
+  padding: 0.5rem 1rem;
+
+  &:hover,
+  &:focus {
+    border-color: $brandSecondary;
+    color: $brandSecondary;
+  }
+}

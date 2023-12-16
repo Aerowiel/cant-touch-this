@@ -5,9 +5,12 @@ import BounceSystem from "./WallBounce";
 import PlayerInputSystem from "./PlayerInput";
 import CollisionDetectorSystem from "./CollisionDetector";
 import CollisionDamageSystem from "./CollisionDamage";
+import WallBounceSystem from "./WallBounce";
+import BonusRendererSystem from "./BonusRenderer";
+import SpawnerSystem from "./Spawner";
+
 /* Debug */
 import DebugColliderRendererSystem from "./DebugColliderRenderer";
-import WallBounceSystem from "./WallBounce";
 
 export {
   PlayerRendererSystem,
@@ -18,6 +21,8 @@ export {
   CollisionDetectorSystem,
   CollisionDamageSystem,
   WallBounceSystem,
+  BonusRendererSystem,
+  SpawnerSystem,
   /* Debug */
   DebugColliderRendererSystem,
 };

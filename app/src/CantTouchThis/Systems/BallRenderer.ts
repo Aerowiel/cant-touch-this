@@ -6,7 +6,7 @@ import {
   SizeComponent,
 } from "../Components";
 
-export default class BallRenderer extends System {
+export default class BallRendererSystem extends System {
   componentsRequired = new Set<Function>([
     BallComponent,
     PositionComponent,

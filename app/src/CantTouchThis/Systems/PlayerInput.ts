@@ -1,7 +1,6 @@
 import { Entity, System } from "~/src/CantTouchThis/GameEngine/ECS";
 import { PlayerComponent, VelocityComponent } from "../Components";
 import GameKey from "../Utils/GameKey";
-import Keyboard from "../Utils/Keyboard";
 
 export default class PlayerInputSystem extends System {
   componentsRequired = new Set<Function>([PlayerComponent, VelocityComponent]);
@@ -14,29 +13,62 @@ export default class PlayerInputSystem extends System {
     velocity.vx = 0;
     velocity.vy = 0;
 
-    if (
+    const upIsDown =
       this.ecs.keyboard.gameKeys.get(GameKey.up).isDown ||
-      this.ecs.keyboard.gameKeys.get(GameKey.arrowUp).isDown
-    ) {
+      this.ecs.keyboard.gameKeys.get(GameKey.arrowUp).isDown;
+    const leftIsDown =
+      this.ecs.keyboard.gameKeys.get(GameKey.left).isDown ||
+      this.ecs.keyboard.gameKeys.get(GameKey.arrowLeft).isDown;
+    const downIsDown =
+      this.ecs.keyboard.gameKeys.get(GameKey.down).isDown ||
+      this.ecs.keyboard.gameKeys.get(GameKey.arrowDown).isDown;
+    const rightIsDown =
+      this.ecs.keyboard.gameKeys.get(GameKey.right).isDown ||
+      this.ecs.keyboard.gameKeys.get(GameKey.arrowRight).isDown;
+
+    /* @TODO maybe refacto this */
+
+    // up
+    if (upIsDown) {
       velocity.vy -= 8;
     }
-    if (
-      this.ecs.keyboard.gameKeys.get(GameKey.left).isDown ||
-      this.ecs.keyboard.gameKeys.get(GameKey.arrowLeft).isDown
-    ) {
-      velocity.vx -= 8;
+    // right
+    if (rightIsDown) {
+      velocity.vx += 8;
     }
-    if (
-      this.ecs.keyboard.gameKeys.get(GameKey.down).isDown ||
-      this.ecs.keyboard.gameKeys.get(GameKey.arrowDown).isDown
-    ) {
+    // down
+    if (downIsDown) {
       velocity.vy += 8;
     }
-    if (
-      this.ecs.keyboard.gameKeys.get(GameKey.right).isDown ||
-      this.ecs.keyboard.gameKeys.get(GameKey.arrowRight).isDown
-    ) {
-      velocity.vx += 8;
+    // left
+    if (leftIsDown) {
+      velocity.vx -= 8;
+    }
+
+    const velocityAdjustement = 8 - Math.sqrt(Math.pow(8, 2) / 2);
+
+    /* adjust diagonal movements */
+    // up + right
+    if (upIsDown && rightIsDown) {
+      velocity.vy += velocityAdjustement;
+      velocity.vx -= velocityAdjustement;
+    }
+    // up + left
+    if (upIsDown && leftIsDown) {
+      velocity.vy += velocityAdjustement;
+      velocity.vx += velocityAdjustement;
+    }
+
+    // down + right
+    if (downIsDown && rightIsDown) {
+      velocity.vy -= velocityAdjustement;
+      velocity.vx -= velocityAdjustement;
+    }
+
+    // down + left
+    if (downIsDown && leftIsDown) {
+      velocity.vy -= velocityAdjustement;
+      velocity.vx += velocityAdjustement;
     }
   }
 }

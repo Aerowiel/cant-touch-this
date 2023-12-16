@@ -4,11 +4,11 @@ import { useLoaderData } from "@remix-run/react";
 import { createPlayerSession, getPlayer } from "~/session.server";
 import { MetaFunction, redirect } from "@remix-run/node";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "~/src/CantTouchThis/CantTouchThis";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import MobileNotSupported from "~/src/CantTouchThis/Designs/MobileNotSupported";
-import GameCompresser from "~/src/CantTouchThis/Utils/GameCompressor";
-import GameEncoder from "~/src/CantTouchThis/Utils/GameEncoder";
 import Game from "~/src/CantTouchThis/Game/Game";
+import GameCompressor from "~/src/CantTouchThis/Utils/GameCompressor";
+import { wsContext } from "~/ws-context";
 
 export const loader = async ({ request }) => {
   const data = {
@@ -31,7 +31,7 @@ export const action = async ({ request }) => {
         return redirect("/");
       }
 
-      const trimmedPseudonyme = pseudonyme.substring(0, 20);
+      const trimmedPseudonyme = pseudonyme.substring(0, 3);
 
       return createPlayerSession({
         request,
@@ -48,13 +48,14 @@ export const action = async ({ request }) => {
       const pseudonyme = player.pseudonyme;
 
       /* Replay */
-      const clientScore = Number(formData.get("score") as string);
-      const seed = formData.get("s") as string;
-      const compressedSnapshots = formData.get("h") as string;
-      const encodedSnapshots = GameCompresser.decompress(compressedSnapshots);
-      const snapshots = GameEncoder.decodeSnapshots(encodedSnapshots);
-      console.log({ snapshots });
-      console.log({ seed });
+      const compressedGameState = formData.get("h") as string;
+      const {
+        score: clientScore,
+        seed,
+        snapshots,
+      } = GameCompressor.decompress(compressedGameState);
+
+      /* check snapshots, delay between 2 frames shouldn't be > 100 or so */
 
       const canvas = {
         width: CANVAS_HEIGHT,
@@ -75,22 +76,31 @@ export const action = async ({ request }) => {
 
       const scoreAlreadyExists = await getScoreBySeed(seed);
 
-      console.log({ scoreAlreadyExists });
       const scoreSeemsLegit =
         clientScore === serverScore && !scoreAlreadyExists;
 
+      console.log({ clientScore, serverScore });
+
       if (!scoreSeemsLegit) {
         /* Rickroll cheaters */
-        return redirect(
+        console.log({
+          pseudonyme,
+          clientScore,
+          serverScore,
+          scoreAlreadyExists,
+        });
+
+        return null;
+        /*return redirect(
           "https://www.youtube.com/watch?v=oHg5SJYRHA0&ab_channel=cotter548"
-        );
+        );*/
       }
 
       await addScore({
         pseudonyme,
         score: serverScore,
         seed,
-        replay: compressedSnapshots,
+        replay: compressedGameState,
       });
       await getTopTenScores();
 
@@ -108,13 +118,27 @@ export const meta: MetaFunction = () => {
 export default function Index() {
   const { player, scores } = useLoaderData<typeof loader>();
   const [isDesktop, setIsDesktop] = useState(true);
+  const [numberOfPlayers, setNumberOfPlayers] = useState(null);
+
+  let socket = useContext(wsContext);
 
   useEffect(() => {
     if (window.innerWidth < 1024) setIsDesktop(false);
   }, []);
 
+  useEffect(() => {
+    if (!socket) return;
+    socket.on("update-number-of-players", ({ numberOfPlayers }) => {
+      setNumberOfPlayers(numberOfPlayers);
+    });
+  }, [socket]);
+
   return isDesktop ? (
-    <CantTouchThis player={player} scores={scores} />
+    <CantTouchThis
+      player={player}
+      scores={scores}
+      numberOfPlayers={numberOfPlayers}
+    />
   ) : (
     <MobileNotSupported />
   );

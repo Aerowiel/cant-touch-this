@@ -15,9 +15,20 @@ services:
       traefik.frontend.rule: "Host:cant-touch-this.test"
     ports:
       - 3000
+  postgres:
+    image: postgres:13
+    networks:
+      - default
+      - traefik
+    environment:
+      POSTGRES_USER: ctt
+      POSTGRES_PASSWORD: ctt
+      POSTGRES_DB: ctt
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
 
 volumes:
-  db-data:
+  postgres-db-volume:
 
 networks:
   traefik:

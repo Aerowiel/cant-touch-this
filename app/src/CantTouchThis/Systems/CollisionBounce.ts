@@ -1,7 +1,6 @@
 import { Entity, System } from "~/src/CantTouchThis/GameEngine/ECS";
 import {
   BouncyComponent,
-  PlayerComponent,
   RectColliderComponent,
   VelocityComponent,
 } from "../Components";

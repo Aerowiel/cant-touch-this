@@ -1,0 +1,15 @@
+@import "./Fonts/fonts";
+
+$fontFamily: "Cascadia Code Regular", "monospace";
+
+$fontRegularSize: 1rem;
+$fontMediuSize: 1.2rem;
+$fontBigSize: 2.5rem;
+
+$fontRegular: 400;
+$fontMedium: 500;
+$fontBold: 700;
+
+body {
+  font-family: $fontFamily;
+}
