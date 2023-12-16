@@ -1,0 +1,13 @@
+.health-bar {
+  display: flex;
+  gap: 0.5rem;
+
+  &__heart {
+    color: $brandPrimary;
+
+    svg {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+  }
+}

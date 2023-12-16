@@ -48,14 +48,17 @@ const StartGame = ({ player, isRetry, startNewGame }) => {
   return (
     <div className="start-game">
       <div className="choose-pseudonyme">
-        <div className="choose-pseudonyme__label">Pseudonyme</div>
+        <div className="choose-pseudonyme__label">
+          <span>Pseudonyme</span>
+          <span className="max-characters">(max 3 characters)</span>
+        </div>
         <input
           className="choose-pseudonyme__input"
           onFocus={() => (inputIsFocused.current = true)}
           onBlur={() => (inputIsFocused.current = false)}
           value={pseudonyme}
           onChange={(event) => setPseudonyme(event.target.value)}
-          maxLength={20}
+          maxLength={3}
         ></input>
       </div>
 

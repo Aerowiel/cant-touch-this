@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { LinksFunction } from "@remix-run/node";
 import {
   Links,
@@ -8,6 +9,8 @@ import {
   ScrollRestoration,
 } from "@remix-run/react";
 import styles from "~/styles/main.css";
+import { connect, Socket } from "socket.io-client";
+import { wsContext } from "./ws-context";
 
 export const links: LinksFunction = () => {
   return [
@@ -19,6 +22,17 @@ export const links: LinksFunction = () => {
 };
 
 export default function App() {
+  const [socket, setSocket] =
+    useState<Socket<DefaultEventsMap, DefaultEventsMap>>();
+
+  useEffect(() => {
+    let connection = connect();
+    setSocket(connection);
+    return () => {
+      connection.close();
+    };
+  }, []);
+
   return (
     <html lang="en">
       <head>
@@ -28,7 +42,9 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <Outlet />
+        <wsContext.Provider value={socket}>
+          <Outlet />
+        </wsContext.Provider>
         <ScrollRestoration />
         <Scripts />
         {/*<LiveReload />*/}

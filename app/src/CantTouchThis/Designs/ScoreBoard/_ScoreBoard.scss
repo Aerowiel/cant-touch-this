@@ -3,7 +3,7 @@
   flex-direction: column;
   align-items: center;
 
-  color: green;
+  color: $brandPrimary;
   margin-bottom: 2rem;
   width: 30rem;
 
@@ -25,14 +25,24 @@
     white-space: nowrap;
 
     thead {
-      color: green;
+      color: $brandPrimary;
     }
 
     th,
     td {
-      border: 1px solid green;
+      border: 1px solid $brandPrimary;
       text-align: center;
       padding: 0.25rem;
+    }
+
+    .score-board-table-row {
+      &__replay {
+        padding-top: 0.4rem;
+        svg {
+          width: 1.5rem;
+          height: 1.5rem;
+        }
+      }
     }
   }
 }

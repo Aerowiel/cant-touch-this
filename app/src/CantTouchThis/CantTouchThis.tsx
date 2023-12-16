@@ -1,25 +1,27 @@
 import { useRef, useState } from "react";
 import GameOver from "~/src/CantTouchThis/Designs/GameOver";
 import StartGame from "~/src/CantTouchThis/Designs/StartGame";
-import { useSubmit } from "@remix-run/react";
+import { useNavigate, useSubmit } from "@remix-run/react";
 import ScoreBoard from "./Designs/ScoreBoard";
-import GameHistory from "./Utils/GameHistory";
 import Game from "./Game/Game";
-import LZUTF8 from "lzutf8";
-import GameEncoder from "./Utils/GameEncoder";
-import GameCompresser from "./Utils/GameCompressor";
+import GameCompressor from "./Utils/GameCompressor";
+import HealthBar from "./Designs/HealthBar";
+import StopReplay from "./Designs/StopReplay";
+import NumberOfPlayers from "./Designs/NumberOfPlayers";
 
 export const CANVAS_WIDTH = 600;
 export const CANVAS_HEIGHT = 600;
 
-const CantTouchThis = ({ player, scores }) => {
+const CantTouchThis = ({ player, scores, numberOfPlayers }) => {
   const canvasRef = useRef();
 
   const [started, setStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(0);
+  const [health, setHealth] = useState(null);
 
-  const [replay, setReplay] = useState(null);
+  const [replaying, setReplaying] = useState(null);
+  const replayController = useRef(null);
 
   const submit = useSubmit();
 
@@ -27,6 +29,7 @@ const CantTouchThis = ({ player, scores }) => {
     setScore(0);
     setGameOver(false);
     setStarted(true);
+    setHealth({ health: 3, maxHealth: 3 });
 
     const canvas = {
       width: CANVAS_HEIGHT,
@@ -39,6 +42,7 @@ const CantTouchThis = ({ player, scores }) => {
       callbacks: {
         onScoreUpdate: setScore,
         onEndGame: handleEndGame,
+        onPlayerHealthUpdate: setHealth,
       },
     });
 
@@ -55,37 +59,35 @@ const CantTouchThis = ({ player, scores }) => {
     setGameOver(true);
     setStarted(false);
 
-    console.log({ game });
+    /* No need to send score if it's not a potential high score */
+    if (
+      scores.length < 10 ||
+      scores.some((highScore) => {
+        return highScore.score < game.score;
+      })
+    ) {
+      const { score, seed } = game;
+      const compressedGameState = GameCompressor.compress(
+        score,
+        seed,
+        game.history.snapshots
+      );
 
-    const encodedSnapshots = GameEncoder.encodeSnapshots(
-      game.history.snapshots
-    );
-    console.log({ encoded: encodedSnapshots });
+      const formData = new FormData();
+      formData.set("action", "endGame");
+      formData.set("h", compressedGameState);
 
-    const decodedSnapshots = GameEncoder.decodeSnapshots(encodedSnapshots);
-    console.log({ decoded: decodedSnapshots });
-    console.log({ base: game.history.snapshots });
-
-    setReplay({ seed: game.seed, snapshots: decodedSnapshots });
-
-    const formData = new FormData();
-    formData.set("action", "endGame");
-    formData.set("score", game.score);
-    formData.set("s", game.seed);
-    formData.set("h", encodedSnapshots);
-    const compressedSnapshots = GameCompresser.compress(formData.get("h"));
-    formData.set("h", compressedSnapshots);
-
-    submit(formData, { method: "post", action: "/?index" });
+      submit(formData, { method: "post", action: "/?index" });
+    }
   };
 
-  const replayGame = async () => {
-    if (!replay) return;
+  const replayGame = async (compressedGameState) => {
+    const { seed, snapshots } = GameCompressor.decompress(compressedGameState);
 
-    setStarted(true);
+    setReplaying(true);
     setGameOver(false);
-
-    const { seed, snapshots } = replay;
+    setStarted(true);
+    setHealth({ health: 3, maxHealth: 3 });
 
     const canvas = {
       width: CANVAS_HEIGHT,
@@ -93,21 +95,32 @@ const CantTouchThis = ({ player, scores }) => {
       context: canvasRef.current.getContext("2d"),
     };
 
-    const _game = new Game({
+    const game = new Game({
       seed,
       canvas,
       callbacks: {
         onScoreUpdate: setScore,
+        onEndGame: () => {
+          setStarted(false);
+          setReplaying(false);
+        },
+        onPlayerHealthUpdate: setHealth,
       },
     });
 
-    await _game.clientReplay(snapshots);
+    const controller = new AbortController();
+    replayController.current = controller;
+    const signal = replayController.current.signal;
+    await game.clientReplay(snapshots, signal);
+  };
 
-    setStarted(false);
+  const stopReplay = () => {
+    replayController.current.abort();
   };
 
   return (
     <div className="cant-touch-this">
+      {numberOfPlayers && <NumberOfPlayers numberOfPlayers={numberOfPlayers} />}
       <div
         style={{
           display: "flex",
@@ -119,14 +132,15 @@ const CantTouchThis = ({ player, scores }) => {
         {gameOver ? (
           <GameOver score={score} />
         ) : started ? (
-          <div className="cant-touch-this__score">SCORE: {score}</div>
+          <>
+            <div className="cant-touch-this__score">SCORE: {score}</div>
+            <HealthBar {...health} />
+          </>
         ) : null}
 
         {!started && (
           <>
-            <ScoreBoard scores={scores} />
-            <button onClick={replayGame}>replay</button>
-
+            <ScoreBoard scores={scores} replayGame={replayGame} />
             <StartGame
               isRetry={gameOver}
               startNewGame={startNewGame}
@@ -150,6 +164,7 @@ const CantTouchThis = ({ player, scores }) => {
             height={CANVAS_HEIGHT}
           ></canvas>
         </div>
+        {replaying ? <StopReplay stopReplay={stopReplay} /> : null}
       </div>
     </div>
   );

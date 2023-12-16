@@ -9,14 +9,22 @@
     gap: 0.5rem;
 
     &__label {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
       font-size: 2rem;
-      color: green;
+      color: $brandPrimary;
+
+      .max-characters {
+        padding-top: 0.5rem;
+        font-size: 1rem;
+      }
     }
     &__input {
       padding: 0.5rem 1rem;
-      border: 2px solid green;
-      color: green;
-      background-color: black;
+      border: 2px solid $brandPrimary;
+      color: $brandPrimary;
+      background-color: $backgroundColor;
       outline: none;
       font-size: 2rem;
     }
@@ -24,16 +32,16 @@
 
   .start-button {
     cursor: pointer;
-    border: 2px solid green;
-    background-color: black;
+    border: 2px solid $brandPrimary;
+    background-color: $backgroundColor;
     font-size: 2rem;
-    color: green;
+    color: $brandPrimary;
     padding: 0.5rem 1rem;
 
     &:hover,
     &:focus {
-      border-color: red;
-      color: red;
+      border-color: $brandSecondary;
+      color: $brandSecondary;
     }
 
     &:disabled {

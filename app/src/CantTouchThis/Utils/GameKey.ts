@@ -1,20 +1,20 @@
 class GameKey {
+  static up = "KeyW";
+  static left = "KeyA";
+  static down = "KeyS";
+  static right = "KeyD";
+
+  // Pour elsa
+  static arrowUp = "ArrowUp";
+  static arrowLeft = "ArrowLeft";
+  static arrowDown = "ArrowDown";
+  static arrowRight = "ArrowRight";
+
   constructor(
     public code: string,
     public isDown: boolean = false,
     public previousIsDown: Boolean = false
   ) {}
 }
-
-GameKey.up = "KeyW";
-GameKey.left = "KeyA";
-GameKey.down = "KeyS";
-GameKey.right = "KeyD";
-
-// Pour elsa
-GameKey.arrowUp = "ArrowUp";
-GameKey.arrowLeft = "ArrowLeft";
-GameKey.arrowDown = "ArrowDown";
-GameKey.arrowRight = "ArrowRight";
 
 export default GameKey;

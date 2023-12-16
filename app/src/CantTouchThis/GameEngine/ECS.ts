@@ -53,11 +53,13 @@ class ECS {
   public canvas;
   public keyboard;
   public timeMachine;
+  public random;
 
-  constructor(canvas: any, keyboard: any, timeMachine: any) {
+  constructor(canvas: any, keyboard: any, timeMachine: any, random: any) {
     this.canvas = canvas;
     this.keyboard = keyboard;
     this.timeMachine = timeMachine;
+    this.random = random;
   }
 
   /* Entities API */
@@ -75,6 +77,18 @@ class ECS {
 
   public getEntities(): Map<Entity, ComponentContainer> {
     return this.entities;
+  }
+
+  public getEntitiesWithComponent(
+    component: Function
+  ): Map<Entity, ComponentContainer> {
+    return new Map(
+      [...this.entities].filter(
+        ([entity, components]: [Entity, ComponentContainer]) => {
+          return components.has(component);
+        }
+      )
+    );
   }
 
   /* Components API */
@@ -172,6 +186,11 @@ class ECS {
     } else {
       this.systems.get(system)?.delete(entity);
     }
+  }
+
+  /* Utils */
+  getRandomBetween(min, max) {
+    return Math.round(this.random() * (max - min) + min);
   }
 }
 

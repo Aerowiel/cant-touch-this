@@ -5,7 +5,7 @@ import {
   SizeComponent,
 } from "../Components";
 
-export default class PlayerRenderer extends System {
+export default class PlayerRendererSystem extends System {
   componentsRequired = new Set<Function>([
     PositionComponent,
     SizeComponent,
@@ -13,7 +13,7 @@ export default class PlayerRenderer extends System {
   ]);
 
   drawPlayer(position: PositionComponent, size: SizeComponent): void {
-    this.ecs.canvas.context.fillStyle = "green";
+    this.ecs.canvas.context.fillStyle = "#98971a";
     this.ecs.canvas.context.fillRect(
       position.x,
       position.y,

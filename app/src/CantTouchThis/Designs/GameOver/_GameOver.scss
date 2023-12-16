@@ -25,36 +25,36 @@
 
 @keyframes example {
   0% {
-    color: lime;
-    text-shadow: 0 0 20px green;
+    color: $brandSecondary;
+    text-shadow: 0 0 20px $brandPrimary;
   }
   25% {
-    color: green;
-    text-shadow: 2px 2px 2px lime;
+    color: $brandPrimary;
+    text-shadow: 2px 2px 2px $brandSecondary;
     transform: translate(-2px, 1px);
   }
   40% {
-    color: lime;
+    color: $brandSecondary;
     text-shadow: none;
     transform: translate(0, 0);
   }
   50% {
-    color: green;
-    text-shadow: 5px 5px 2px blue, -5px -5px 2px red;
+    color: $brandPrimary;
+    text-shadow: 5px 5px 2px $brandPrimary, -5px -5px 2px $brandSecondary;
     transform: translate(0px, 5px);
   }
   70% {
-    color: lime;
+    color: $brandSecondary;
     text-shadow: none;
     transform: translate(0, 0);
   }
   80% {
-    color: lime;
-    text-shadow: 0 0 20px green;
+    color: $brandSecondary;
+    text-shadow: 0 0 20px $brandPrimary;
     transform: translate(-2px, 1px);
   }
   100% {
-    color: lime;
+    color: $brandSecondary;
     text-shadow: none;
   }
 }

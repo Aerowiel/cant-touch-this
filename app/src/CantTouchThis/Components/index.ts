@@ -7,6 +7,7 @@ import ColorComponent from "./Color";
 import RectColliderComponent from "./RectCollider";
 import PlayerComponent from "./Player";
 import HealthComponent from "./Health";
+import BonusComponent from "./Bonus";
 
 export {
   PositionComponent,
@@ -18,4 +19,5 @@ export {
   RectColliderComponent,
   PlayerComponent,
   HealthComponent,
+  BonusComponent,
 };
